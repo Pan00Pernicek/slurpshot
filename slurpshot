@@ -3,7 +3,7 @@
 # Choose directory to save screenshots and viewer
 #define the theme
 menuexec="bemenu -m all -H 32 --tb #1d2021 --tf #ffffff --nb #1d2021 --fb #1d2021 --hb #282828 --hf #ffffff -p "
-SHOTPATH=$HOME
+SHOTPATH="/home/darek/Obrázky/"
 VIEWER=/usr/bin/imv-wayland
 
 WINDOWS=$(swaymsg -t get_tree | jq '.. | (.nodes? // empty)[] | select(.visible and .pid) | "\(.app_id) \(.rect.x),\(.rect.y) \(.rect.width)x\(.rect.height)"')
@@ -20,8 +20,7 @@ EOF
 if [ $? = 1 ]; then
     exit
 fi
-#FILENAME="${SHOTPATH}/screenshot-$(date +'%Y-%m-%d-%H%M%S.png')"
-FILENAME="/home/darek/Obrázky/screenshot-$(date +'%Y-%m-%d-%H%M%S.png')"
+FILENAME="${SHOTPATH}screenshot-$(date +'%Y-%m-%d-%H%M%S.png')"
 GRID=\"$(echo $CHOICE | awk ' {print $2,$3} ')
 
 # Name printed when viewing screenshot, adjust if you edit FILENAME"
