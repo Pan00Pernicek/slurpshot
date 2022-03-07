@@ -1,24 +1,30 @@
 #!/bin/bash
 # Simple screenshot script, dependencies: grim, bemenu, imv, jq, slurp
 # Choose directory to save screenshots and viewer
-
+#define the theme
+menuexec="bemenu -m all -H 32 --tb #1d2021 --tf #ffffff --nb #1d2021 --fb #1d2021 --hb #282828 --hf #ffffff -p "
 SHOTPATH=$HOME
 VIEWER=/usr/bin/imv-wayland
 
-WINDOWS=`swaymsg -t get_tree | jq '.. | (.nodes? // empty)[] | select(.visible and .pid) | "\(.app_id) \(.rect.x),\(.rect.y) \(.rect.width)x\(.rect.height)"'`
-FOCUSED=`swaymsg -t get_tree | jq '.. | (.nodes? // empty)[] | select(.focused and .pid) | .rect | "\(.x),\(.y) \(.width)x\(.height)"'`
+WINDOWS=$(swaymsg -t get_tree | jq '.. | (.nodes? // empty)[] | select(.visible and .pid) | "\(.app_id) \(.rect.x),\(.rect.y) \(.rect.width)x\(.rect.height)"')
+FOCUSED=$(swaymsg -t get_tree | jq '.. | (.nodes? // empty)[] | select(.focused and .pid) | .rect | "\(.x),\(.y) \(.width)x\(.height)"')
 
-CHOICE=`bemenu -m all -b -H 11 --tf=#ffffff --ff=#ffffff --hf=#4c7899 --fb=#000000 --tb=#000000 --nb=#000000 --hb=#000000 -p "Please select screenshot area:" << EOF
+CHOICE=$($menuexec "Please select screenshot area:" << EOF
 Fullscreen
 Selection
 Focus
 $WINDOWS
-EOF`
-
-FILENAME="${SHOTPATH}/screenshot-$(date +'%Y-%m-%d-%H%M%S.png')"
+EOF
+)
+#exit if esc was pressed
+if [ $? = 1 ]; then
+    exit
+fi
+#FILENAME="${SHOTPATH}/screenshot-$(date +'%Y-%m-%d-%H%M%S.png')"
+FILENAME="/home/darek/Obrázky/screenshot-$(date +'%Y-%m-%d-%H%M%S.png')"
 GRID=\"$(echo $CHOICE | awk ' {print $2,$3} ')
 
-# Name printed when viewing screenshot, adjust if you edit FILENAME
+# Name printed when viewing screenshot, adjust if you edit FILENAME"
 FILENAME_SHORT=${FILENAME: -32}
 
 if [ "$CHOICE" = Fullscreen ]
@@ -35,37 +41,27 @@ else
 fi
 
 
-WAHL=`bemenu -m all -b -H 11 --tf=#ffffff --ff=#ffffff --hf=#4c7899 --fb=#000000 --tb=#000000 --nb=#000000 --hb=#000000 -p "Screenshot taken" << EOF
+WAHL=$($menuexec "Screenshot taken" << EOF
 View
-Print and Save
-Print and Discard
 Save
 Discard
-EOF`
-
-
+EOF
+)
+if [ $? = 1 ]; then
+    WAHL=Discard
+fi
 if [ "$WAHL" = View ]
 then	
 	$VIEWER $FILENAME &
-	WAHL2=`bemenu -m all -b -H 11 --tf=#ffffff --ff=#ffffff --hf=#4c7899 --fb=#000000 --tb=#000000 --nb=#000000 --hb=#000000  -p "${FILENAME_SHORT}"<< EOF
+	WAHL2=$($menuexec "${FILENAME_SHORT}"<< EOF
 	Save
-    Print and Save
-    Print and Discard
 	Discard
-EOF`
+EOF
+)
 	if [ $WAHL2 = Discard ]
 	then
 	        rm $FILENAME &
 	        PID_VIEWER=$(pidof -s ${VIEWER})
-	        kill -9 ${PID_VIEWER}
-    elif [ "$WAHL2" = "Print and Save" ]
-    then
-            lpr $FILENAME &
-	        kill -9 ${PID_VIEWER}
-    elif [ "$WAHL2" = "Print and Discard" ]
-    then
-            lpr $FILENAME &
-	        rm $FILENAME &
 	        kill -9 ${PID_VIEWER}
 	else
 		PID_VIEWER=$(pidof -s ${VIEWER})
@@ -75,13 +71,6 @@ EOF`
 elif [ "$WAHL" = Discard ]
 then
 	rm $FILENAME
-elif [ "$WAHL" = "Print and Save" ]
-    then
-            lpr $FILENAME &
- elif [ "$WAHL" = "Print and Discard" ]
-    then
-            lpr $FILENAME 
-	        rm $FILENAME &
 else
 	true
 fi
